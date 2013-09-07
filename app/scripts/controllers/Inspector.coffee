@@ -31,6 +31,7 @@ angular.module('neo4jApp.controllers')
       $scope.selectScheme = (color) ->
         $scope.style.color = color.color
         $scope.style['border-color'] = color['border-color']
+        $scope.style['text-color-internal'] = color['text-color-internal']
         $scope.saveStyle()
 
       $scope.selectCaption  = (caption) ->
