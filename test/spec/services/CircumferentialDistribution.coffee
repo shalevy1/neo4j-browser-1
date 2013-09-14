@@ -59,4 +59,58 @@ describe 'Service: CircumferentialDistribution', () ->
       4: 40
     )
 
+  it 'should leave arrows alone whose positions have already been fixed, and bump up the floating ones', () ->
+    floating =
+      1: 359
+      2: 0
+      3: 1
+    fixed =
+      0: 340
+    result = Distribution.distribute(
+      floating: floating
+      fixed: fixed
+    , 20)
+    expect(result).toEqual(
+      0: 340
+      1: 0
+      2: 20
+      3: 40
+    )
+
+  it 'should leave arrows alone whose positions have already been fixed, and bump down the floating ones', () ->
+    floating =
+      1: 359
+      2: 0
+      3: 1
+    fixed =
+      0: 20
+    result = Distribution.distribute(
+      floating: floating
+      fixed: fixed
+    , 20)
+    expect(result).toEqual(
+      0: 20
+      1: 320
+      2: 340
+      3: 0
+    )
+
   it 'should leave arrows alone whose positions have already been fixed, and distribute between them', () ->
+    floating =
+      1: 359
+      2: 0
+      3: 1
+    fixed =
+      0: 340
+      4: 20
+    result = Distribution.distribute(
+      floating: floating
+      fixed: fixed
+    , 20)
+    expect(result).toEqual(
+      0: 340
+      1: 350
+      2: 0
+      3: 10
+      4: 20
+    )
