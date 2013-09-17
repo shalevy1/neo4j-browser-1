@@ -6,111 +6,101 @@ describe 'Service: CircumferentialDistribution', () ->
   beforeEach module 'neo4jApp.services'
 
   # instantiate service
-  Distribution = {}
+  RelationshipAngle = null
+  distribute = null
+
   beforeEach inject (_CircumferentialDistribution_) ->
-    Distribution = _CircumferentialDistribution_
+    distribute = _CircumferentialDistribution_.distribute
+
+  beforeEach inject ($injector) ->
+    RelationshipAngle = $injector.get('RelationshipAngle')
 
   it 'should leave arrows alone that are far enough apart', () ->
-    arrowsThatAreAlreadyFarEnoughApart =
-        0: 0
-        1: 120
-        2: 240
-    result = Distribution.distribute(
-      floating: arrowsThatAreAlreadyFarEnoughApart
-      fixed: {}
-    , 20)
-    expect(result).toEqual(arrowsThatAreAlreadyFarEnoughApart)
+    arrowsThatAreAlreadyFarEnoughApart = [
+      new RelationshipAngle(0, 'incoming', 0, 'floating')
+      new RelationshipAngle(1, 'incoming', 120, 'floating')
+      new RelationshipAngle(2, 'incoming', 240, 'floating')
+    ]
+
+    expect(distribute(arrowsThatAreAlreadyFarEnoughApart, 20))
+      .toEqual([
+        new RelationshipAngle(0, 'incoming', 0, 'fixed')
+        new RelationshipAngle(1, 'incoming', 120, 'fixed')
+        new RelationshipAngle(2, 'incoming', 240, 'fixed')
+      ])
 
   it 'should spread out arrows that are too close together', () ->
-    arrowsThatAreTooCloseTogether =
-      0: 160
-      1: 170
-      2: 180
-      3: 190
-      4: 200
-    result = Distribution.distribute(
-      floating: arrowsThatAreTooCloseTogether
-      fixed: {}
-    , 20)
-    expect(result).toEqual(
-      0: 140
-      1: 160
-      2: 180
-      3: 200
-      4: 220
-    )
+    arrowsThatAreTooCloseTogether = [
+      new RelationshipAngle(0, 'incoming', 160, 'floating')
+      new RelationshipAngle(1, 'incoming', 170, 'floating')
+      new RelationshipAngle(2, 'incoming', 180, 'floating')
+      new RelationshipAngle(3, 'incoming', 190, 'floating')
+      new RelationshipAngle(4, 'incoming', 200, 'floating')
+    ]
+    expect(distribute(arrowsThatAreTooCloseTogether, 20)).toEqual([
+      new RelationshipAngle(0, 'incoming', 140, 'fixed')
+      new RelationshipAngle(1, 'incoming', 160, 'fixed')
+      new RelationshipAngle(2, 'incoming', 180, 'fixed')
+      new RelationshipAngle(3, 'incoming', 200, 'fixed')
+      new RelationshipAngle(4, 'incoming', 220, 'fixed')
+    ])
 
   it 'should spread out arrows that are too close together, wrapping across 0 degrees', () ->
-    arrowsThatAreTooCloseTogether =
-      0: 340
-      1: 350
-      2: 0
-      3: 10
-      4: 20
-    result = Distribution.distribute(
-      floating: arrowsThatAreTooCloseTogether
-      fixed: {}
-    , 20)
-    expect(result).toEqual(
-      0: 320
-      1: 340
-      2: 0
-      3: 20
-      4: 40
-    )
+    arrowsThatAreTooCloseTogether = [
+      new RelationshipAngle(0, 'incoming', 340, 'floating')
+      new RelationshipAngle(1, 'incoming', 350, 'floating')
+      new RelationshipAngle(2, 'incoming', 0, 'floating')
+      new RelationshipAngle(3, 'incoming', 10, 'floating')
+      new RelationshipAngle(4, 'incoming', 20, 'floating')
+    ]
+    expect(distribute(arrowsThatAreTooCloseTogether, 20)).toEqual([
+      new RelationshipAngle(2, 'incoming', 0, 'fixed')
+      new RelationshipAngle(3, 'incoming', 20, 'fixed')
+      new RelationshipAngle(4, 'incoming', 40, 'fixed')
+      new RelationshipAngle(0, 'incoming', 320, 'fixed')
+      new RelationshipAngle(1, 'incoming', 340, 'fixed')
+    ])
 
   it 'should leave arrows alone whose positions have already been fixed, and bump up the floating ones', () ->
-    floating =
-      1: 359
-      2: 0
-      3: 1
-    fixed =
-      0: 340
-    result = Distribution.distribute(
-      floating: floating
-      fixed: fixed
-    , 20)
-    expect(result).toEqual(
-      0: 340
-      1: 0
-      2: 20
-      3: 40
-    )
+    arrowsThatAreTooCloseTogether = [
+      new RelationshipAngle(0, 'incoming', 340, 'fixed')
+      new RelationshipAngle(1, 'incoming', 359, 'floating')
+      new RelationshipAngle(2, 'incoming', 0, 'floating')
+      new RelationshipAngle(3, 'incoming', 1, 'floating')
+    ]
+    expect(distribute(arrowsThatAreTooCloseTogether, 20)).toEqual([
+      new RelationshipAngle(2, 'incoming', 20, 'fixed')
+      new RelationshipAngle(3, 'incoming', 40, 'fixed')
+      new RelationshipAngle(0, 'incoming', 340, 'fixed')
+      new RelationshipAngle(1, 'incoming', 0, 'fixed')
+    ])
 
   it 'should leave arrows alone whose positions have already been fixed, and bump down the floating ones', () ->
-    floating =
-      1: 359
-      2: 0
-      3: 1
-    fixed =
-      0: 20
-    result = Distribution.distribute(
-      floating: floating
-      fixed: fixed
-    , 20)
-    expect(result).toEqual(
-      0: 20
-      1: 320
-      2: 340
-      3: 0
-    )
+    arrowsThatAreTooCloseTogether = [
+      new RelationshipAngle(0, 'incoming', 20, 'fixed')
+      new RelationshipAngle(1, 'incoming', 359, 'floating')
+      new RelationshipAngle(2, 'incoming', 0, 'floating')
+      new RelationshipAngle(3, 'incoming', 1, 'floating')
+    ]
+    expect(distribute(arrowsThatAreTooCloseTogether, 20)).toEqual([
+      new RelationshipAngle(2, 'incoming', 340, 'fixed')
+      new RelationshipAngle(3, 'incoming', 0, 'fixed')
+      new RelationshipAngle(0, 'incoming', 20, 'fixed')
+      new RelationshipAngle(1, 'incoming', 320, 'fixed')
+    ])
 
   it 'should leave arrows alone whose positions have already been fixed, and distribute between them', () ->
-    floating =
-      1: 359
-      2: 0
-      3: 1
-    fixed =
-      0: 340
-      4: 20
-    result = Distribution.distribute(
-      floating: floating
-      fixed: fixed
-    , 20)
-    expect(result).toEqual(
-      0: 340
-      1: 350
-      2: 0
-      3: 10
-      4: 20
-    )
+    arrowsThatAreTooCloseTogether = [
+      new RelationshipAngle(0, 'incoming', 340, 'fixed')
+      new RelationshipAngle(1, 'incoming', 359, 'floating')
+      new RelationshipAngle(2, 'incoming', 0, 'floating')
+      new RelationshipAngle(3, 'incoming', 1, 'floating')
+      new RelationshipAngle(4, 'incoming', 20, 'fixed')
+    ]
+    expect(distribute(arrowsThatAreTooCloseTogether, 20)).toEqual([
+      new RelationshipAngle(2, 'incoming', 0, 'fixed')
+      new RelationshipAngle(3, 'incoming', 10, 'fixed')
+      new RelationshipAngle(4, 'incoming', 20, 'fixed')
+      new RelationshipAngle(0, 'incoming', 340, 'fixed')
+      new RelationshipAngle(1, 'incoming', 350, 'fixed')
+    ])
