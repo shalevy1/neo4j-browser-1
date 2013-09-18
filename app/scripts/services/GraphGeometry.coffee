@@ -2,8 +2,8 @@
 
 angular.module('neo4jApp.services')
   .service 'GraphGeometry', [
-    'GraphStyle', 'TextMeasurement',
-    (GraphStyle, TextMeasurent) ->
+    'GraphStyle', 'TextMeasurement', 'RelationshipRouting'
+    (GraphStyle, TextMeasurent, RelationshipRouting) ->
 
       square = (distance) -> distance * distance
 
@@ -121,4 +121,5 @@ angular.module('neo4jApp.services')
 
       @onTick = (graph) ->
         layoutRelationships(graph.relationships.all())
+        RelationshipRouting.routeRelationships(graph)
   ]

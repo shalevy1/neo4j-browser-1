@@ -51,7 +51,7 @@ angular.module('neo4jApp.services')
           end: endIndex
         )
 
-      for i in [0..list.length - 2]
+      for i in [0..list.length - 2] by 1
         if list[i].floating() and list[i + 1].floating() and tooDense(i, i + 1)
           expand i, i + 1
 
