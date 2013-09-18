@@ -27,6 +27,7 @@ angular.module('neo4jApp.services')
         @propertyMap = properties
         @propertyList = for own key,value of properties
             { key: key, value: value }
+        @layout = {}
 
       toJSON: ->
         @propertyMap

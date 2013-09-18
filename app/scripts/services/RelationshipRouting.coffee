@@ -2,29 +2,25 @@
 
 angular.module('neo4jApp.services')
   .service 'RelationshipRouting', [
-    'CircumferentialDistribution'
-    (CircumferentialDistribution) ->
+    'CircumferentialDistribution', 'RelationshipAngle'
+    (CircumferentialDistribution, RelationshipAngle) ->
 
-      @routeRelationships = (graph) ->
-        for relationship in graph.relationships.all()
-          relationship.start.addRelationship(
-            direction: 'outgoing'
-            angle: relationship.angle
-          )
-          relationship.end.addRelationship(
-            direction: 'incoming'
-            angle: wrapAngle(relationship.angle + 180)
-          )
+      routeRelationships: do () ->
+        reverse = (angle) -> if angle > 180 then angle - 180 else angle + 180
 
-        nodesAndDensities = graph.nodes.all().map((node) ->
-          node: node
-          density: 2
-        )
-        nodesAndDensities.sort((a, b) -> a.density - b.density)
+        (graph) ->
+          for node in graph.nodes.all()
+            node.layout.relationshipAngles = []
 
-        for node in nodesAndDensities.map((d) -> d.node)
-          angles = CircumferentialDistribution.distribute(node.layout.angles)
-          for angle in angles
-            angle.otherNode.layout.fixAngle(angle)
-          node.layout.angles = angles
+          for relationship in graph.relationships.all()
+            relationship.source.layout.relationshipAngles.push(
+              new RelationshipAngle(relationship, 'outgoing', relationship.angle, 'floating')
+            )
+
+            relationship.target.layout.relationshipAngles.push(
+              new RelationshipAngle(relationship, 'incoming', reverse(relationship.angle), 'floating')
+            )
+
+          for node in graph.nodes.all()
+            CircumferentialDistribution.distribute(node.layout.relationshipAngles, 20)
   ]
