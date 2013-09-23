@@ -50,11 +50,10 @@ angular.module('neo4jApp.services')
 
           for key,accessor of axes
             bounds[key] =
-              min: Math.min.apply(null, @nodes().map((node) ->
-                accessor(node) - node.radius))
-              max: Math.max.apply(null, @nodes().map((node) ->
-                accessor(node) + node.radius))
+              min: Math.min.apply(null, @nodes().map(accessor))
+              max: Math.max.apply(null, @nodes().map(accessor))
 
+          bounds.maxRadius = Math.max.apply(null, @nodes().map((node) -> node.radius))
           bounds
 
       malformed = ->

@@ -49,6 +49,9 @@ angular.module('neo4jApp.controllers')
       el = d3.select($element[0])
       el.append('defs')
       graph = null
+      scale =
+        x: (x) -> x
+        y: (y) -> y
 
       selectedItem = null
 
@@ -74,23 +77,23 @@ angular.module('neo4jApp.controllers')
         height = $element.height()
         width  = $element.width()
         force.size([width, height])
-        el.attr("viewBox", naturalViewBox(width, height))
+#        el.attr("viewBox", naturalViewBox(width, height))
 
       fit = ->
         height = $element.height()
         width  = $element.width()
         box = graph.boundingBox()
 
-        el.transition().attr("viewBox",
-          if (box.x.min > 0 && box.x.max < width && box.y.min > 0 && box.y.max < height)
-            naturalViewBox(width, height)
-          else [
-            box.x.min
-            box.y.min
-            box.x.max - box.x.min
-            box.y.max - box.y.min
-          ].join(" ")
-        )
+        if (box.x.min > 0 && box.x.max < width && box.y.min > 0 && box.y.max < height)
+          scale =
+            x: (x) -> x
+            y: (y) -> y
+        else
+          console.log('scaling')
+          scale =
+            x: d3.scale.linear().domain([box.x.min, box.x.max]).range([box.maxRadius, width - box.maxRadius])
+            y: d3.scale.linear().domain([box.y.min, box.y.max]).range([box.maxRadius, height - box.maxRadius])
+        tick()
 
       selectItem = (item) ->
         $rootScope.selectedGraphItem = item
@@ -132,12 +135,12 @@ angular.module('neo4jApp.controllers')
 
       tick = ->
 
-        GraphGeometry.onTick(graph)
+        GraphGeometry.onTick(graph, scale)
 
         # Only translate nodeGroups, because this simplifies node renderers;
         # relationship renderers always take account of both node positions
         nodeGroups = el.selectAll("g.node")
-        .attr("transform", (node) -> "translate(" + node.x + "," + node.y + ")")
+        .attr("transform", (node) -> "translate(" + scale.x(node.x) + "," + scale.y(node.y) + ")")
 
         for renderer in GraphRenderer.nodeRenderers
           nodeGroups.call(renderer.onTick)

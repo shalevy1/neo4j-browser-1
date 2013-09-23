@@ -21,7 +21,7 @@ angular.module('neo4jApp.services')
 
         circles
         .attr
-          r: (node) -> node.radius
+          r: (node) -> node.radius - parseFloat(GraphStyle.forNode(node).get('border-width')) / 2
           fill: (node) -> GraphStyle.forNode(node).get('color')
           stroke: (node) -> GraphStyle.forNode(node).get('border-color')
           'stroke-width': (node) -> GraphStyle.forNode(node).get('border-width')

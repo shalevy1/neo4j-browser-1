@@ -54,16 +54,16 @@ angular.module('neo4jApp.services')
           if width < targetWidth
             return [shortCaption, width]
 
-      layoutRelationships = (relationships) ->
+      layoutRelationships = (relationships, scale) ->
         for relationship in relationships
-          dx = relationship.target.x - relationship.source.x
-          dy = relationship.target.y - relationship.source.y
+          dx = scale.x(relationship.target.x) - scale.x(relationship.source.x)
+          dy = scale.y(relationship.target.y) - scale.y(relationship.source.y)
           length = Math.sqrt(square(dx) + square(dy))
           relationship.arrowLength =
             length - relationship.source.radius - relationship.target.radius
           alongPath = (from, distance) ->
-            x: from.x + dx * distance / length
-            y: from.y + dy * distance / length
+            x: scale.x(from.x) + dx * distance / length
+            y: scale.y(from.y) + dy * distance / length
 
           shaftRadius = parseFloat(GraphStyle.forRelationship(relationship).get('shaft-width')) / 2
           headRadius = shaftRadius + 3
@@ -72,7 +72,7 @@ angular.module('neo4jApp.services')
 
           relationship.startPoint = alongPath(relationship.source, relationship.source.radius)
           relationship.endPoint = alongPath(relationship.target, -relationship.target.radius)
-          relationship.midShaftPoint = alongPath(relationship.startPoint, shaftLength / 2)
+          relationship.midShaftPoint = alongPath(relationship.source, relationship.source.radius + shaftLength / 2)
           relationship.angle = Math.atan2(dy, dx) / Math.PI * 180
           relationship.textAngle = relationship.angle
           if relationship.angle < -90 or relationship.angle > 90
@@ -119,6 +119,6 @@ angular.module('neo4jApp.services')
         formatNodeCaptions(graph.nodes())
         measureRelationshipCaptions(graph.relationships())
 
-      @onTick = (graph) ->
-        layoutRelationships(graph.relationships())
+      @onTick = (graph, scale) ->
+        layoutRelationships(graph.relationships(), scale)
   ]
