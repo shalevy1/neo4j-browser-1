@@ -11,19 +11,45 @@ angular.module('neo4jApp.services')
         for node in nodes
           node.radius = parseFloat(GraphStyle.forNode(node).get("diameter")) / 2
 
-      formatNodeCaptions = (nodes) ->
-        for node in nodes
+      formatNodeCaptions = do () ->
+        fitOnFixedNumberOfLines = (node, words, maxLines, radius, lineHeight, measure) ->
+          lines = []
+          iWord = 0;
+          for iLine in [0..maxLines - 1]
+            line = ""
+            baseline = (1 + iLine - maxLines / 2) * lineHeight
+            constainingHeight = if iLine < maxLines / 2 then baseline - lineHeight else baseline
+            lineWidth = Math.sqrt(square(radius) - square(constainingHeight)) * 2
+            console.log(maxLines, iLine, lineHeight, radius, lineWidth, constainingHeight)
+            while iWord < words.length and measure(line + " " + words[iWord]) < lineWidth
+              line += " " + words[iWord]
+              iWord++
+            lines.push
+              node: node
+              text: line
+              baseline: baseline
+          [lines, iWord]
+
+        fitCaptionIntoCircle = (node) ->
           template = GraphStyle.forNode(node).get("caption")
           captionText = GraphStyle.interpolate(template, node.id, node.propertyMap)
+          fontFamily = 'sans-serif'
+          fontSize = parseFloat(GraphStyle.forNode(node).get('font-size'))
+          measure = (text) ->
+            TextMeasurent.measure(text, fontFamily, fontSize)
+
           words = captionText.split(" ")
-          lines = []
-          for i in [0..words.length - 1]
-            lines.push(
-              node: node
-              text: words[i]
-              baseline: (1 + i - words.length / 2) * 10
-            )
-          node.caption = lines
+          maxLines = node.radius * 2 / fontSize
+
+          for lineCount in [1..maxLines]
+            [lines, iWord] = fitOnFixedNumberOfLines(node, words, lineCount, node.radius, fontSize, measure)
+            if iWord >= words.length
+              return lines
+          []
+
+        (nodes) ->
+          for node in nodes
+            node.caption = fitCaptionIntoCircle(node)
 
       measureRelationshipCaption = (relationship, caption) ->
         fontFamily = 'sans-serif'
