@@ -12,23 +12,48 @@ angular.module('neo4jApp.services')
           node.radius = parseFloat(GraphStyle.forNode(node).get("diameter")) / 2
 
       formatNodeCaptions = do () ->
+        emptyLine = (node, radius, lineHeight, maxLines, iLine) ->
+          baseline = (1 + iLine - maxLines / 2) * lineHeight
+          constainingHeight = if iLine < maxLines / 2 then baseline - lineHeight else baseline
+          lineWidth = Math.sqrt(square(radius) - square(constainingHeight)) * 2
+          {
+            node: node
+            text: ''
+            baseline: baseline
+            remainingWidth: lineWidth
+          }
+
         fitOnFixedNumberOfLines = (node, words, maxLines, radius, lineHeight, measure) ->
           lines = []
           iWord = 0;
           for iLine in [0..maxLines - 1]
-            line = ""
-            baseline = (1 + iLine - maxLines / 2) * lineHeight
-            constainingHeight = if iLine < maxLines / 2 then baseline - lineHeight else baseline
-            lineWidth = Math.sqrt(square(radius) - square(constainingHeight)) * 2
-            console.log(maxLines, iLine, lineHeight, radius, lineWidth, constainingHeight)
-            while iWord < words.length and measure(line + " " + words[iWord]) < lineWidth
-              line += " " + words[iWord]
+            line = emptyLine(node, radius, lineHeight, maxLines, iLine)
+            while iWord < words.length and measure(" " + words[iWord]) < line.remainingWidth
+              line.text += " " + words[iWord]
+              line.remainingWidth -= measure(" " + words[iWord])
               iWord++
-            lines.push
-              node: node
-              text: line
-              baseline: baseline
+            lines.push line
           [lines, iWord]
+
+        addShortenedNextWord = (lines, word, radius, lineHeight, measure) ->
+          [_, lineWidth] = emptyLine(radius, lineHeight, lines.length, lines.length - 1)
+          [lineToFill, iLine] = lastNonEmptyLine(lines)
+          if iLine < lines.length - 1 and lines[iLine + 1].remainingWidth > lineToFill.remainingWidth
+            [lineToFill, iLine] = [lines[iLine + 1], iLine + 1]
+
+          for line, iLine in lines
+
+          remainingWidth = lineWidth - measure(lineToFill.text + " ")
+
+          console.log(lines, word, lineWidth, remainingWidth)
+          while true
+            if word.length <= 2
+              break
+            word = word.substr(0, word.length - 2) + '\u2026'
+            if measure(word) < remainingWidth
+              lineToFill.text += " " + word
+              break
+          lines
 
         fitCaptionIntoCircle = (node) ->
           template = GraphStyle.forNode(node).get("caption")
@@ -41,11 +66,12 @@ angular.module('neo4jApp.services')
           words = captionText.split(" ")
           maxLines = node.radius * 2 / fontSize
 
+          lines = []
           for lineCount in [1..maxLines]
             [lines, iWord] = fitOnFixedNumberOfLines(node, words, lineCount, node.radius, fontSize, measure)
             if iWord >= words.length
               return lines
-          []
+          addShortenedNextWord(lines, words[iWord], node.radius, fontSize, measure)
 
         (nodes) ->
           for node in nodes
