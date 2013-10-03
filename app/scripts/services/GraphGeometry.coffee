@@ -35,25 +35,21 @@ angular.module('neo4jApp.services')
             lines.push line
           [lines, iWord]
 
-        addShortenedNextWord = (lines, word, radius, lineHeight, measure) ->
-          [_, lineWidth] = emptyLine(radius, lineHeight, lines.length, lines.length - 1)
-          [lineToFill, iLine] = lastNonEmptyLine(lines)
-          if iLine < lines.length - 1 and lines[iLine + 1].remainingWidth > lineToFill.remainingWidth
-            [lineToFill, iLine] = [lines[iLine + 1], iLine + 1]
+        addShortenedNextWord = (lineToFill, word, measure) ->
 
-          for line, iLine in lines
-
-          remainingWidth = lineWidth - measure(lineToFill.text + " ")
-
-          console.log(lines, word, lineWidth, remainingWidth)
           while true
             if word.length <= 2
               break
             word = word.substr(0, word.length - 2) + '\u2026'
-            if measure(word) < remainingWidth
+            if measure(word) < lineToFill.remainingWidth
               lineToFill.text += " " + word
               break
-          lines
+#          lines
+
+        noEmptyLines = (lines) ->
+          for line in lines
+            if line.text.length is 0 then return false
+          return true
 
         fitCaptionIntoCircle = (node) ->
           template = GraphStyle.forNode(node).get("caption")
@@ -63,15 +59,20 @@ angular.module('neo4jApp.services')
           measure = (text) ->
             TextMeasurent.measure(text, fontFamily, fontSize)
 
+          iWord = 0
           words = captionText.split(" ")
           maxLines = node.radius * 2 / fontSize
 
-          lines = []
+          lines = [emptyLine(node, node.radius, fontSize, maxLines, 0)]
           for lineCount in [1..maxLines]
-            [lines, iWord] = fitOnFixedNumberOfLines(node, words, lineCount, node.radius, fontSize, measure)
+            [candidateLines, candidateWords] = fitOnFixedNumberOfLines(node, words, lineCount, node.radius, fontSize, measure)
+            if noEmptyLines(candidateLines)
+              lines = candidateLines
+              iWord = candidateWords
             if iWord >= words.length
               return lines
-          addShortenedNextWord(lines, words[iWord], node.radius, fontSize, measure)
+          addShortenedNextWord(lines[lines.length - 1], words[iWord], measure)
+          lines
 
         (nodes) ->
           for node in nodes
