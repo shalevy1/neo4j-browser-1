@@ -33,18 +33,16 @@ angular.module('neo4jApp.services')
               line.remainingWidth -= measure(" " + words[iWord])
               iWord++
             lines.push line
+          if iWord < words.length
+            addShortenedNextWord(lines[maxLines - 1], words[iWord], measure)
           [lines, iWord]
 
         addShortenedNextWord = (lineToFill, word, measure) ->
-
-          while true
-            if word.length <= 2
-              break
+          until word.length <= 2
             word = word.substr(0, word.length - 2) + '\u2026'
             if measure(word) < lineToFill.remainingWidth
               lineToFill.text += " " + word
               break
-#          lines
 
         noEmptyLines = (lines) ->
           for line in lines
@@ -71,7 +69,6 @@ angular.module('neo4jApp.services')
               iWord = candidateWords
             if iWord >= words.length
               return lines
-          addShortenedNextWord(lines[lines.length - 1], words[iWord], measure)
           lines
 
         (nodes) ->
