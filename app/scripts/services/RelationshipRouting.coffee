@@ -9,10 +9,10 @@ angular.module('neo4jApp.services')
         reverse = (angle) -> if angle > 180 then angle - 180 else angle + 180
 
         (graph) ->
-          for node in graph.nodes.all()
+          for node in graph.nodes()
             node.layout.relationshipAngles = []
 
-          for relationship in graph.relationships.all()
+          for relationship in graph.relationships()
             relationship.source.layout.relationshipAngles.push(
               new RelationshipAngle(relationship, 'outgoing', relationship.angle, 'floating')
             )
@@ -21,6 +21,6 @@ angular.module('neo4jApp.services')
               new RelationshipAngle(relationship, 'incoming', reverse(relationship.angle), 'floating')
             )
 
-          for node in graph.nodes.all()
+          for node in graph.nodes()
             CircumferentialDistribution.distribute(node.layout.relationshipAngles, 20)
   ]
