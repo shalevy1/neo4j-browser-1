@@ -68,6 +68,28 @@ angular.module('neo4jApp.services')
       onTick: noop
     )
 
+    relationshipAngles = new GraphRenderer.Renderer(
+      onGraphChange: noop
+
+      onTick: (selection) ->
+        markers = selection.selectAll("path.marker").data((node) -> d3.values(node.layout.relationshipAngles))
+
+        markers.enter()
+        .append('path')
+        .attr('class', 'marker')
+
+        sin = (angle) ->
+          Math.sin(angle.angle / 180 * Math.PI)
+        cos = (angle) ->
+          Math.cos(angle.angle / 180 * Math.PI)
+
+        markers
+        .attr('d', (angle) ->
+              "M 0 0 L #{50 * cos(angle)} #{50 * sin(angle)}")
+        .attr('angle', (angle) -> angle.angle)
+        .attr('stroke', 'black')
+    )
+
     nodeOverlay = new GraphRenderer.Renderer(
       onGraphChange: (selection) ->
         circles = selection.selectAll('circle.overlay').data((node) ->
@@ -160,6 +182,7 @@ angular.module('neo4jApp.services')
 
     GraphRenderer.nodeRenderers.push(nodeOutline)
     GraphRenderer.nodeRenderers.push(nodeCaption)
+    GraphRenderer.nodeRenderers.push(relationshipAngles)
     GraphRenderer.nodeRenderers.push(nodeOverlay)
     GraphRenderer.relationshipRenderers.push(arrowPath)
     GraphRenderer.relationshipRenderers.push(relationshipType)

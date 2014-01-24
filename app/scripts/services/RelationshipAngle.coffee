@@ -3,6 +3,9 @@
 angular.module('neo4jApp.services')
   .factory 'RelationshipAngle', [ ->
 
+    reverseAngle = (angle) -> if angle > 180 then angle - 180 else angle + 180
+    reverseDirection = (direction) -> if direction is 'incoming' then 'outgoing' else 'incoming'
+
     class RelationshipAngle
       constructor: (@relationship, @direction, @angle, @fixedOrFloating) ->
 
@@ -15,9 +18,12 @@ angular.module('neo4jApp.services')
 
       otherNode: () ->
         if @direction is 'incoming'
-          @relationship.start
+          @relationship.source
         else
-          @relationship.end
+          @relationship.target
+
+      reverse: () ->
+        new RelationshipAngle(@relationship, reverseDirection(@direction), reverseAngle(@angle), @fixedOrFloating)
 
     RelationshipAngle
   ]

@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 angular.module('neo4jApp.services')
   .service 'CircumferentialDistribution', () ->
 
-    @distribute = (list, minSeparation) ->
+    runsOfTooDenseArrows = (list, minSeparation) ->
       list.sort((a, b) -> a.angle - b.angle)
 
       length = (startIndex, endIndex) ->
@@ -49,15 +49,7 @@ angular.module('neo4jApp.services')
         else
           index
 
-      wrapAngle = (angle) ->
-        if angle < 0
-          angle + 360
-        else if angle >= 360
-          angle - 360
-        else
-          angle
-
-      runsOfTooDenseArrows = []
+      runs = []
 
       expand = (startIndex, endIndex) ->
         if length(startIndex, endIndex) < list.length
@@ -66,7 +58,7 @@ angular.module('neo4jApp.services')
           if list[wrapIndex(startIndex - 1)].floating() and tooDense(wrapIndex(startIndex - 1), endIndex)
             return expand wrapIndex(startIndex - 1), endIndex
 
-        runsOfTooDenseArrows.push(
+        runs.push(
           start: startIndex
           end: endIndex
         )
@@ -75,10 +67,31 @@ angular.module('neo4jApp.services')
         if list[i].floating() and list[i + 1].floating() and tooDense(i, i + 1)
           expand i, i + 1
 
+      runs
+
+    @density = (list, minSeparation) ->
+      return runsOfTooDenseArrows(list, minSeparation).reduce(((a, b) -> a + b), 0)
+
+    @distribute = (list, minSeparation) ->
+
       midwayBetween = (startIndex, endIndex) ->
         list[startIndex].angle + angleBetween(startIndex, endIndex) / 2
 
-      for run in runsOfTooDenseArrows
+      angleBetween = (startIndex, endIndex) ->
+        if startIndex < endIndex
+          list[endIndex].angle - list[startIndex].angle
+        else
+          360 - (list[startIndex].angle - list[endIndex].angle)
+
+      wrapAngle = (angle) ->
+        if angle < 0
+          angle + 360
+        else if angle >= 360
+          angle - 360
+        else
+          angle
+
+      for run in runsOfTooDenseArrows(list, minSeparation)
         center = midwayBetween(run.start, run.end)
         separation = minSeparation
         runLength = length(run.start, run.end)
